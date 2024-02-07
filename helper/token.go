@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"errors"
 	"go_gin/entity"
 	"time"
 
@@ -29,3 +30,25 @@ func GenerateToken(user *entity.User) (string, error) {
 
 	return ss, err
 }
+
+
+// Kenapa pointer int ? Karena return dari jwt pointer
+func ValidateToken(tokenString string) (*int, error) { 
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return mySigningKey, nil
+	})
+
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			return nil, errors.New("invalid token signature")
+		}
+		return nil, errors.New("your token was expired")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("your token was expired")
+	}
+
+	return &claims.ID, nil
+} 
